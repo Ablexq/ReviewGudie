@@ -1,5 +1,3 @@
-> 公众号：[字节数组](https://testczy.oss-cn-beijing.aliyuncs.com/通用/字节数组.png)，热衷于分享 Android 系统源码解析，Jetpack 源码解析、热门开源库源码解析等面试必备的知识点，欢迎关注
-
 View 的事件分发机制一直是 Android 开发中比较难啃的一块知识点，想要理顺 MotionEvent 在 ViewGroup 和 View 这两者之间流转的规则十分不容易，整个过程涉及分发、拦截、消费三个过程，每个过程根据返回值的不同在流程就会有很大差别，且 Activity 也会参与进这个过程，不参照源码进行分析的话就很难明白触摸事件的分发规则。在很久前我就想过要来动笔写这一块知识点，过年期间就熬夜肝了一篇，希望对你有所帮助😇😇
 
 ### 一、坐标系
@@ -73,11 +71,11 @@ ViewConfiguration.get(Context).getScaledTouchSlop()
 
 ### 三、事件分发的三个阶段
 
-在整个事件分发过程中，我们主要接触的是 ViewGroup 和 View 这两种视图类型。一次完整的事件分发过程会包括三个阶段，即事件的**发布、拦截和消费**，这三个过程分别对应声明在 View 和 ViewGroup 中的三个方法
+在整个事件分发过程中，我们主要接触的是 ViewGroup 和 View 这两种视图类型。一次完整的事件分发过程会包括三个阶段，即事件的**分发、拦截和消费**，这三个过程分别对应声明在 View 和 ViewGroup 中的三个方法
 
-#### 1、发布
+#### 1、分发
 
-事件的发布对应着如下方法
+事件的分发对应着如下方法
 
 ```java
 public boolean dispatchTouchEvent(MotionEvent ev)

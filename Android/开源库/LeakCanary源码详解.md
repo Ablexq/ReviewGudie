@@ -11,7 +11,7 @@ LeakCanary automatically detects leaks of the following objects:
 
 - destroyed `Activity` instances
 - destroyed `Fragment` instances
-- destroyed fragment `View` instances
+- destroyed `fragment View` instances
 - cleared `ViewModel` instances
 
 我们也可以从 LeakCanary 的 `AppWatcher.Config` 这个类找到答案。Config 类用于配置是否开启内存检测，从其配置项就可以看出来 leakcanary 支持：**Activity、Fragment、FragmentView、ViewModel** 等四种类型
