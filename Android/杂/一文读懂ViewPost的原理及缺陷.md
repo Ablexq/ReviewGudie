@@ -1,5 +1,3 @@
-> 公众号：[字节数组](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/36784c0d2b924b04afb5ee09eb16ca6f~tplv-k3u1fbpfcp-watermark.image)，热衷于分享 Android 系统源码解析，Jetpack 源码解析、热门开源库源码解析等面试必备的知识点
-
 很多开发者都了解这么一个知识点：在 Activity 的 `onCreate` 方法里我们无法直接获取到 View 的宽高信息，但通过 `View.post(Runnable)`这种方式就可以，那背后的具体原因你是否有了解过呢？
 
 读者可以尝试以下操作。可以发现，除了通过 `View.post(Runnable)`这种方式可以获得 View 的真实宽高外，其它方式取得的值都是 0
@@ -91,22 +89,17 @@ AttachInfo 是 View 内部的一个静态类，其内部持有一个 Handler 对
 
 ```java
 final static class AttachInfo {
+     /**
+      * A Handler supplied by a view's {@link android.view.ViewRootImpl}. This
+      * handler can be used to pump events in the UI events queue.
+      */
+      @UnsupportedAppUsage final Handler mHandler;
 
-        /**
-         * A Handler supplied by a view's {@link android.view.ViewRootImpl}. This
-         * handler can be used to pump events in the UI events queue.
-         */
-        @UnsupportedAppUsage
-        final Handler mHandler;
-
-    	AttachInfo(IWindowSession session, IWindow window, Display display,
-                ViewRootImpl viewRootImpl, Handler handler, Callbacks effectPlayer,
-                Context context) {
+    	AttachInfo(IWindowSession session, IWindow window, Display display, ViewRootImpl viewRootImpl, Handler handler, Callbacks effectPlayer, Context context) {
             ···
             mHandler = handler;
             ···
     	}
-
     	···
 }
 ```
@@ -128,8 +121,7 @@ final ViewRootHandler mHandler = new ViewRootHandler();
 
 public ViewRootImpl(Context context, Display display, IWindowSession session, boolean useSfChoreographer) {
   ···
-  mAttachInfo = new View.AttachInfo(mWindowSession, mWindow, display, this, mHandler, this,
-                context);
+  mAttachInfo = new View.AttachInfo(mWindowSession, mWindow, display, this, mHandler, this, context);
   ···
 }
 
@@ -184,7 +176,6 @@ public class HandlerActionQueue {
                 final HandlerAction handlerAction = actions[i];
                 handler.postDelayed(handlerAction.action, handlerAction.delay);
             }
-
             mActions = null;
             mCount = 0;
         }
@@ -204,9 +195,7 @@ public class HandlerActionQueue {
                     || action != null && action.equals(otherAction);
         }
     }
-
     ···
-
 }
 ```
 
@@ -248,8 +237,7 @@ public class HandlerActionQueue {
 
 ```java
     @Override
-    public void handleResumeActivity(IBinder token, boolean finalStateRequest, boolean isForward,
-            String reason) {
+    public void handleResumeActivity(IBinder token, boolean finalStateRequest, boolean isForward, String reason) {
         ···
         //Activity 的 onResume 方法
         final ActivityClientRecord r = performResumeActivity(token, finalStateRequest, reason);
@@ -283,8 +271,7 @@ public class HandlerActionQueue {
     @Override
     public void addView(@NonNull View view, @NonNull ViewGroup.LayoutParams params) {
         applyDefaultToken(params);
-        mGlobal.addView(view, params, mContext.getDisplayNoVerify(), mParentWindow,
-                mContext.getUserId());
+        mGlobal.addView(view, params, mContext.getDisplayNoVerify(), mParentWindow, mContext.getUserId());
     }
 ```
 

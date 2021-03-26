@@ -1,5 +1,3 @@
-> 公众号：[字节数组](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/36784c0d2b924b04afb5ee09eb16ca6f~tplv-k3u1fbpfcp-watermark.image)，热衷于分享 Android 系统源码解析，Jetpack 源码解析、热门开源库源码解析等面试必备的知识点
-
 在今年的三月份，我因为需要为项目搭建一个新的网络请求框架开始接触 Kotlin 协程。那时我司项目中同时存在着两种网络请求方式，采用的技术栈各不相同，Java、Kotlin、RxJava、LiveData 各种混搭，技术栈的不统一长远来看肯定是会造成很多不便的，所以当时就打算封装一个新的网络请求框架来作为项目的统一规范（前面的人估计也是这么想的，所以就造成了同个项目中的网络请求方式越来越多😂😂），那么就需要考虑采用什么技术栈来实现了
 
 采用 Kotlin 语言来实现必不可少，都这年头了还用 Java 也说不过去。Retrofit 也必不可少，而当时 Retrofit 也已经原生支持 Kotlin 协程了，Google 官方推出的 Jetpack 协程扩展库也越来越多，就最终决定弃用 RxJava 拥抱 Kotlin 协程，将协程作为技术栈之一
@@ -40,7 +38,7 @@ Goggle 官方推荐将 Kotlin 协程作为在 Android 上进行异步编程的�
 
 协程可以称为**轻量级线程**。Kotlin 协程在 CoroutineScope 的上下文中通过 launch、async 等**协程构造器**（CoroutineBuilder）来声明并启动
 
-```kotlin
+```java
 fun main() {
     GlobalScope.launch(context = Dispatchers.IO) {
         //延时一秒
@@ -55,7 +53,7 @@ fun main() {
 private fun log(msg: Any?) = println("[${Thread.currentThread().name}] $msg")
 ```
 
-```kotlin
+```java
 [DefaultDispatcher-worker-1 @coroutine#1] launch
 [main] end
 ```
@@ -96,7 +94,7 @@ suspend 函数只能由其它 suspend 函数调用，或者是由协程来调用
 
 以下示例展示了一项任务（假设 get 方法是一个网络请求任务）的简单协程实现：
 
-```kotlin
+```java
 suspend fun fetchDocs() {                             // Dispatchers.Main
     val result = get("https://developer.android.com") // Dispatchers.IO for `get`
     show(result)                                      // Dispatchers.Main
@@ -132,7 +130,7 @@ GlobalScope 属于**全局作用域**，这意味着通过 GlobalScope 启动的
 
 GlobalScope 不会阻塞其所在线程，所以以下代码中主线程的日志会早于 GlobalScope 内部输出日志。此外，GlobalScope 启动的协程相当于守护线程，不会阻止 JVM 结束运行，所以如果将主线程的休眠时间改为三百毫秒的话，就不会看到 launch A 输出日志
 
-```kotlin
+```java
 fun main() {
     log("start")
     GlobalScope.launch {
@@ -151,7 +149,7 @@ fun main() {
 }
 ```
 
-```kotlin
+```java
 [main] start
 [main] end
 [DefaultDispatcher-worker-1 @coroutine#1] GlobalScope
@@ -175,7 +173,7 @@ runBlocking 的一个方便之处就是：只有当内部**相同作用域**的�
 
 **所以说，runBlocking 本身带有阻塞线程的意味，但其内部运行的协程又是非阻塞的，读者需要意会这两者的区别**
 
-```kotlin
+```java
 fun main() {
     log("start")
     runBlocking {
@@ -202,7 +200,7 @@ fun main() {
 }
 ```
 
-```kotlin
+```java
 [main] start
 [main] launchA - 0
 [main] launchB - 0
@@ -217,7 +215,7 @@ fun main() {
 
 基于是否会阻塞线程的区别，以下代码中 runBlocking 会早于 GlobalScope 输出日志
 
-```kotlin
+```java
 fun main() {
     GlobalScope.launch(Dispatchers.IO) {
         delay(600)
@@ -243,7 +241,7 @@ fun main() {
 
 `coroutineScope` 函数用于创建一个独立的协程作用域，直到所有启动的协程都完成后才结束自身。`runBlocking` 和 `coroutineScope` 看起来很像，因为它们都需要等待其内部所有相同作用域的协程结束后才会结束自己。两者的主要区别在于 `runBlocking` 方法会阻塞当前线程，而 `coroutineScope`不会阻塞线程，而是会挂起并释放底层线程以供其它协程使用。由于这个差别，`runBlocking` 是一个普通函数，而 `coroutineScope` 是一个挂起函数
 
-```kotlin
+```java
 fun main() = runBlocking {
     launch {
         delay(100)
@@ -261,7 +259,7 @@ fun main() = runBlocking {
 }
 ```
 
-```kotlin
+```java
 [main] Task from coroutine scope
 [main] Task from runBlocking
 [main] Task from nested launch
@@ -272,7 +270,7 @@ fun main() = runBlocking {
 
 `supervisorScope` 函数用于创建一个使用了 SupervisorJob 的 coroutineScope，该作用域的特点就是抛出的异常不会连锁取消同级协程和父协程
 
-```kotlin
+```java
 fun main() = runBlocking {
     launch {
         delay(100)
@@ -293,7 +291,7 @@ fun main() = runBlocking {
 }
 ```
 
-```kotlin
+```java
 [main @coroutine#2] Task from runBlocking
 [main @coroutine#3] Task throw Exception
 [main @coroutine#4] Task from nested launch
@@ -306,7 +304,7 @@ fun main() = runBlocking {
 
 我们可以通过创建与 Activity 生命周期相关联的协程作用域的实例来管理协程的生命周期。CoroutineScope 的实例可以通过 `CoroutineScope()` 或 `MainScope()` 的工厂函数来构建。前者创建通用作用域，后者创建 UI 应用程序的作用域并使用 Dispatchers.Main 作为默认的调度器
 
-```kotlin
+```java
 class Activity {
 
     private val mainScope = MainScope()
@@ -328,7 +326,7 @@ class Activity {
 
 或者，我们可以通过委托模式来让 Activity 实现 CoroutineScope 接口，从而可以在 Activity 内直接启动协程而不必显示地指定它们的上下文，并且在 `onDestroy()`中自动取消所有协程
 
-```kotlin
+```java
 class Activity : CoroutineScope by CoroutineScope(Dispatchers.Default) {
 
     fun onCreate() {
@@ -351,7 +349,7 @@ class Activity : CoroutineScope by CoroutineScope(Dispatchers.Default) {
 
 从输出结果可以看出，当回调了`onDestroy()`方法后协程就不会再输出日志了
 
-```kotlin
+```java
 fun main() = runBlocking {
     val activity = Activity()
     activity.onCreate()
@@ -361,7 +359,7 @@ fun main() = runBlocking {
 }
 ```
 
-```kotlin
+```java
 [main @coroutine#1] Activity Created
 [DefaultDispatcher-worker-1 @coroutine#2] 0
 [DefaultDispatcher-worker-1 @coroutine#2] 1
@@ -377,7 +375,7 @@ fun main() = runBlocking {
 
 看下 `launch` 函数的方法签名。`launch` 是一个作用于 CoroutineScope 的扩展函数，用于在不阻塞当前线程的情况下启动一个协程，并返回对该协程任务的引用，即 Job 对象
 
-```kotlin
+```java
 public fun CoroutineScope.launch(
     context: CoroutineContext = EmptyCoroutineContext,
     start: CoroutineStart = CoroutineStart.DEFAULT,
@@ -393,7 +391,7 @@ public fun CoroutineScope.launch(
 
 可以看到 launchA 和 launchB 是并行交叉执行的
 
-```kotlin
+```java
 fun main() = runBlocking {
     val launchA = launch {
         repeat(3) {
@@ -410,7 +408,7 @@ fun main() = runBlocking {
 }
 ```
 
-```kotlin
+```java
 [main] launchA - 0
 [main] launchB - 0
 [main] launchA - 1
@@ -423,7 +421,7 @@ fun main() = runBlocking {
 
 Job 是协程的句柄。使用 `launch` 或 `async` 创建的每个协程都会返回一个 `Job` 实例，该实例唯一标识协程并管理其生命周期。Job 是一个接口类型，这里列举 Job 几个比较有用的属性和函数
 
-```kotlin
+```java
 	//当 Job 处于活动状态时为 true
 	//如果 Job 未被取消或没有失败，则均处于 active 状态
     public val isActive: Boolean
@@ -460,7 +458,7 @@ Job 具有以下几种状态值，每种状态对应的属性值各不相同
 | *Cancelled* (final state)        | false                                                        | true                                                         | true                                                         |
 | *Completed* (final state)        | false                                                        | true                                                         | false                                                        |
 
-```kotlin
+```java
 fun main() {
     //将协程设置为延迟启动
     val job = GlobalScope.launch(start = CoroutineStart.LAZY) {
@@ -495,7 +493,7 @@ fun main() {
 }
 ```
 
-```kotlin
+```java
 [main] 1. job.isActive：false
 [main] 1. job.isCancelled：false
 [main] 1. job.isCompleted：false
@@ -522,7 +520,7 @@ public fun <T> CoroutineScope.async(
 
 通过`await()`方法可以拿到 async 协程的执行结果，可以看到两个协程的总耗时是远少于七秒的，总耗时基本等于耗时最长的协程
 
-```kotlin
+```java
 fun main() {
     val time = measureTimeMillis {
         runBlocking {
@@ -552,7 +550,7 @@ fun main() {
 
 修改下上述代码，可以发现两个协程的总耗时就会变为七秒左右
 
-```kotlin
+```java
 fun main() {
     val time = measureTimeMillis {
         runBlocking {
@@ -592,7 +590,7 @@ log(asyncA.await() + asyncB.await())
 
 例如，假设我们定义一个用于异步获取两个文档的 `coroutineScope`。通过对每个延迟引用调用 `await()`，我们可以保证这两项 `async` 操作在返回值之前完成：
 
-```kotlin
+```java
 	suspend fun fetchTwoDocs() =
     	coroutineScope {
         	val deferredOne = async { fetchDoc(1) }
@@ -604,7 +602,7 @@ log(asyncA.await() + asyncB.await())
 
 你还可以对集合使用 `awaitAll()`，如以下示例所示：
 
-```kotlin
+```java
 suspend fun fetchTwoDocs() =        // called on any Dispatcher (any thread, possibly Main)
     coroutineScope {
         val deferreds = listOf(     // fetch two docs at the same time
@@ -636,7 +634,7 @@ CoroutineContext 使用以下元素集定义协程的行为：
 
 以下两个 log 语句虽然是运行在不同的协程上，但是其指向的 Job 其实是同个对象
 
-```kotlin
+```java
 fun main() = runBlocking {
     val job = launch {
         log("My job is ${coroutineContext[Job]}")
@@ -669,7 +667,7 @@ Kotlin 协程库提供了四个 Dispatcher 用于指定在何处运行协程，�
 - **[Dispatchers.IO](http://Dispatchers.IO)** - 此调度程序经过了专门优化，适合在主线程之外执行磁盘或网络 I/O。示例包括使用 [Room 组件](https://developer.android.google.cn/topic/libraries/architecture/room)、从文件中读取数据或向文件中写入数据，以及运行任何网络操作
 - **Dispatchers.Default** - 此调度程序经过了专门优化，适合在主线程之外执行占用大量 CPU 资源的工作。用例示例包括对列表排序和解析 JSON
 
-```kotlin
+```java
 fun main() = runBlocking<Unit> {
     launch {
         log("main runBlocking")
@@ -699,7 +697,7 @@ fun main() = runBlocking<Unit> {
 
 对于以下代码，`get`方法内使用`withContext(Dispatchers.IO)` 创建了一个指定在 IO 线程池中运行的代码块，该区间内的任何代码都始终通过 IO 线程来执行。由于 `withContext` 方法本身就是一个挂起函数，因此 `get` 方法也必须定义为挂起函数
 
-```kotlin
+```java
 suspend fun fetchDocs() {                      // Dispatchers.Main
     val result = get("developer.android.com")  // Dispatchers.Main
     show(result)                               // Dispatchers.Main
@@ -724,7 +722,7 @@ suspend fun get(url: String) =                 // Dispatchers.Main
 
 CoroutineName 用于为协程指定一个名字，方便调试和定位问题
 
-```kotlin
+```java
 fun main() = runBlocking<Unit>(CoroutineName("RunBlocking")) {
     log("start")
     launch(CoroutineName("MainCoroutine")) {
@@ -740,7 +738,7 @@ fun main() = runBlocking<Unit>(CoroutineName("RunBlocking")) {
 }
 ```
 
-```kotlin
+```java
 [main @RunBlocking#1] start
 [main @Coroutine#B#4] launch B
 [main @Coroutine#A#3] launch A
@@ -762,7 +760,7 @@ fun main() = runBlocking<Unit> {
 }
 ```
 
-```kotlin
+```java
 [DefaultDispatcher-worker-1 @test#2] Hello World
 ```
 
@@ -774,7 +772,7 @@ fun main() = runBlocking<Unit> {
 
 `job.cancel()`就用于取消协程，`job.join()`用于阻塞等待协程运行结束。因为 `cancel()` 函数调用后会马上返回而不是等待协程结束后再返回，所以此时协程不一定就是已经停止运行了。如果需要确保协程结束运行后再执行后续代码，就需要调用 `join()` 方法来阻塞等待。也可以通过调用 Job 的扩展函数 `cancelAndJoin()` 来完成相同操作，它结合了 `cancel` 和 `join`两个操作
 
-```kotlin
+```java
 fun main() = runBlocking {
     val job = launch {
         repeat(1000) { i ->
@@ -790,7 +788,7 @@ fun main() = runBlocking {
 }
 ```
 
-```kotlin
+```java
 [main] job: I'm sleeping 0 ...
 [main] job: I'm sleeping 1 ...
 [main] job: I'm sleeping 2 ...
@@ -804,7 +802,7 @@ fun main() = runBlocking {
 
 所以即使以下代码主动取消了协程，协程也只会在完成既定循环后才结束运行，因为协程没有在每次循环前先进行检查，导致任务不受取消操作的影响
 
-```kotlin
+```java
 fun main() = runBlocking {
     val startTime = System.currentTimeMillis()
     val job = launch(Dispatchers.Default) {
@@ -824,7 +822,7 @@ fun main() = runBlocking {
 }
 ```
 
-```kotlin
+```java
 [DefaultDispatcher-worker-1] job: I'm sleeping 0 ...
 [DefaultDispatcher-worker-1] job: I'm sleeping 1 ...
 [DefaultDispatcher-worker-1] job: I'm sleeping 2 ...
@@ -836,7 +834,7 @@ fun main() = runBlocking {
 
 为了实现取消协程的目的，就需要为上述代码加上判断协程是否还处于可运行状态的逻辑，当不可运行时就主动退出协程。`isActive` 是 CoroutineScope 的扩展属性，就用于判断协程是否还处于可运行状态
 
-```kotlin
+```java
 fun main() = runBlocking {
     val startTime = System.currentTimeMillis()
     val job = launch(Dispatchers.Default) {
@@ -866,7 +864,7 @@ fun main() = runBlocking {
 
 可取消的挂起函数在取消时会抛出 CancellationException，可以依靠`try {...} finally {...}` 或者 Kotlin 的 `use` 函数在取消协程后释放持有的资源
 
-```kotlin
+```java
 fun main() = runBlocking {
     val job = launch {
         try {
@@ -887,7 +885,7 @@ fun main() = runBlocking {
 }
 ```
 
-```kotlin
+```java
 [main] job: I'm sleeping 0 ...
 [main] job: I'm sleeping 1 ...
 [main] job: I'm sleeping 2 ...
@@ -901,7 +899,7 @@ fun main() = runBlocking {
 
 如果在上一个例子中的 `finally` 块中再调用挂起函数的话，将会导致抛出 CancellationException，因为此时协程已经被取消了。通常我们并不会遇到这种情况，因为常见的资源释放操作都是非阻塞的，且不涉及任何挂起函数。但在极少数情况下我们需要在取消的协程中再调用挂起函数，此时可以使用 `withContext` 函数和 `NonCancellable`上下文将相应的代码包装在 `withContext(NonCancellable) {...}` 代码块中，NonCancellable 就用于创建一个无法取消的协程作用域
 
-```kotlin
+```java
 fun main() = runBlocking {
     log("start")
     val launchA = launch {
@@ -936,7 +934,7 @@ fun main() = runBlocking {
 }
 ```
 
-```kotlin
+```java
 [main] start
 [main] launchA-0
 [main] launchB-0
@@ -954,7 +952,7 @@ fun main() = runBlocking {
 
 所以虽然 parentJob 启动的三个子协程的延时时间各不相同，但它们最终都会打印出日志
 
-```kotlin
+```java
 fun main() = runBlocking {
     val parentJob = launch {
         repeat(3) { i ->
@@ -968,7 +966,7 @@ fun main() = runBlocking {
 }
 ```
 
-```kotlin
+```java
 [main @coroutine#2] request: I'm done and I don't explicitly join my children that are still active
 [main @coroutine#3] Coroutine 0 is done
 [main @coroutine#4] Coroutine 1 is done
@@ -1025,7 +1023,7 @@ fun main() = runBlocking {
 
 `withTimeout` 函数用于指定协程的运行超时时间，如果超时则会抛出 TimeoutCancellationException，从而令协程结束运行
 
-```kotlin
+```java
 fun main() = runBlocking {
     log("start")
     val result = withTimeout(300) {
@@ -1039,7 +1037,7 @@ fun main() = runBlocking {
 }
 ```
 
-```kotlin
+```java
 [main] start
 Exception in thread "main" kotlinx.coroutines.TimeoutCancellationException: Timed out waiting for 300 ms
 	at kotlinx.coroutines.TimeoutKt.TimeoutCancellationException(Timeout.kt:186)
@@ -1068,7 +1066,7 @@ launch 将异常视为未捕获异常，类似于 Java 的 Thread.uncaughtExcept
 
 例如，以下代码中 launchA 抛出的异常会先连锁导致 launchB 也被取消（抛出 JobCancellationException），然后再导致父协程 BlockingCoroutine 也被取消
 
-```kotlin
+```java
 fun main() = runBlocking {
     val launchA = launch {
         delay(1000)
@@ -1087,7 +1085,7 @@ fun main() = runBlocking {
 }
 ```
 
-```kotlin
+```java
 kotlinx.coroutines.JobCancellationException: Parent job is Cancelling; job=BlockingCoroutine{Cancelling}@5eb5c224
 Caused by: java.lang.ArithmeticException: / by zero
 	at coroutines.CoroutinesMainKt$main$1$launchA$1.invokeSuspend(CoroutinesMain.kt:11)
@@ -1103,7 +1101,7 @@ Exception in thread "main" java.lang.ArithmeticException: / by zero
 
 以下代码只会捕获到 launch 抛出的异常
 
-```kotlin
+```java
 fun main() = runBlocking {
     val handler = CoroutineExceptionHandler { _, exception ->
         log("Caught $exception")
@@ -1118,7 +1116,7 @@ fun main() = runBlocking {
 }
 ```
 
-```kotlin
+```java
 [DefaultDispatcher-worker-2] Caught java.lang.AssertionError
 ```
 
@@ -1132,7 +1130,7 @@ fun main() = runBlocking {
 
 例如，以下示例中 firstChild 抛出的异常不会导致 secondChild 被取消，但当 supervisor 被取消时 secondChild 也被同时取消了
 
-```kotlin
+```java
 fun main() = runBlocking {
     val supervisor = SupervisorJob()
     with(CoroutineScope(coroutineContext + supervisor)) {
@@ -1158,7 +1156,7 @@ fun main() = runBlocking {
 }
 ```
 
-```kotlin
+```java
 [main] First child is failing
 [main] First child is cancelled: true, but second one is still active
 [main] Cancelling supervisor
@@ -1187,7 +1185,7 @@ ViewModel KTX 库提供了一个 `viewModelScope`，用于在 ViewModel 启动�
 
 例如，以下 `fetchDocs()` 方法内就依靠 `viewModelScope` 启动了一个协程，用于在后台线程发起网络请求
 
-```kotlin
+```java
 class MyViewModel : ViewModel() {
 
     fun fetchDocs() {
@@ -1216,7 +1214,7 @@ Lifecycle KTX 为每个 [`Lifecycle`](https://developer.android.google.cn/topic/
 
 以下示例演示了如何使用 `lifecycleOwner.lifecycleScope` 异步创建预计算文本：
 
-```kotlin
+```java
 class MyFragment: Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

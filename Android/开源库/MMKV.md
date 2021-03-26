@@ -34,7 +34,6 @@ MMKV 是基于 mmap 内存映射的 key-value 组件，底层序列化/反序列
 ```
 dependencies {
     implementation 'com.tencent:mmkv-static:1.2.7'
-    // replace "1.2.7" with any available version
 }
 ```  
 MMKV 的使用非常简单，所有变更立马生效，无需调用 sync、apply。 在 App 启动时初始化 MMKV，设定 MMKV 的根目录（files/mmkv/），例如在 `Application` 里：

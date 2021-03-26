@@ -24,7 +24,7 @@ implementation "androidx.startup:startup-runtime:1.0.0-alpha01"
 
 `Initializer` 是 Startup 提供的用于声明初始化逻辑和初始化顺序的接口，在 `create(context: Context)`方法中完成初始化过程并返回结果值，在`dependencies()`中指定初始化此 Initializer 前需要先初始化的其它 Initializer
 
-```kotlin
+```java
 	class InitializerA : Initializer<A> {
 
         //在此处完成组件的初始化，并返回初始化结果值
@@ -91,7 +91,7 @@ Startup 提供了两种初始化方法，分别是**自动初始化**和**手动
 
 手动初始化的 Initializer 不需要在 AndroidManifest 中进行声明，只需要通过调用以下方法进行初始化即可
 
-```kotlin
+```java
 val result = AppInitializer.getInstance(this).initializeComponent(InitializerA::class.java)
 ```
 
@@ -219,21 +219,9 @@ Initiaizer 是 Startup 提供的用于声明初始化逻辑和初始化顺序的
 ```java
 public interface Initializer<T> {
 
-    /**
-     * Initializes and a component given the application {@link Context}
-     *
-     * @param context The application context.
-     */
     @NonNull
     T create(@NonNull Context context);
 
-    /**
-     * @return A list of dependencies that this {@link Initializer} depends on. This is
-     * used to determine initialization order of {@link Initializer}s.
-     * <br/>
-     * For e.g. if a {@link Initializer} `B` defines another
-     * {@link Initializer} `A` as its dependency, then `A` gets initialized before `B`.
-     */
     @NonNull
     List<Class<? extends Initializer<?>>> dependencies();
 }
@@ -357,9 +345,7 @@ public final class AppInitializer {
             return sInstance;
         }
     }
-
     ···
-
 }
 ```
 
@@ -372,10 +358,8 @@ public final class AppInitializer {
             Trace.beginSection(SECTION_NAME);
 
             //获取 InitializationProvider 包含的所有 metadata
-            ComponentName provider = new ComponentName(mContext.getPackageName(),
-                    InitializationProvider.class.getName());
-            ProviderInfo providerInfo = mContext.getPackageManager()
-                    .getProviderInfo(provider, GET_META_DATA);
+            ComponentName provider = new ComponentName(mContext.getPackageName(),InitializationProvider.class.getName());
+            ProviderInfo providerInfo = mContext.getPackageManager().getProviderInfo(provider, GET_META_DATA);
             Bundle metadata = providerInfo.metaData;
 
             //获取到字符串 androidx.startup
@@ -394,8 +378,7 @@ public final class AppInitializer {
                         Class<?> clazz = Class.forName(key);
                         //确保 metaData 声明的包名路径指向的是 Initializer 的实现类
                         if (Initializer.class.isAssignableFrom(clazz)) {
-                            Class<? extends Initializer<?>> component =
-                                    (Class<? extends Initializer<?>>) clazz;
+                            Class<? extends Initializer<?>> component = (Class<? extends Initializer<?>>) clazz;
                             if (StartupLogger.DEBUG) {
                                 StartupLogger.i(String.format("Discovered %s", key));
                             }
@@ -431,9 +414,7 @@ public final class AppInitializer {
                 if (initializing.contains(component)) {
                     //initializing 包含 component，说明 Initializer 之间存在循环依赖
                     //直接抛出异常
-                    String message = String.format(
-                            "Cannot initialize %s. Cycle detected.", component.getName()
-                    );
+                    String message = String.format("Cannot initialize %s. Cycle detected.", component.getName());
                     throw new IllegalStateException(message);
                 }
                 Object result;
@@ -446,8 +427,7 @@ public final class AppInitializer {
                         Object instance = component.getDeclaredConstructor().newInstance();
                         Initializer<?> initializer = (Initializer<?>) instance;
                         //获取 initializer 的依赖项
-                        List<Class<? extends Initializer<?>>> dependencies =
-                                initializer.dependencies();
+                        List<Class<? extends Initializer<?>>> dependencies = initializer.dependencies();
 
                         //如果 initializer 的依赖项 dependencies 不为空
                         //则遍历 dependencies 每个 item 进行初始化

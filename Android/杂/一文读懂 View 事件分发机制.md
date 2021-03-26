@@ -103,7 +103,7 @@ public boolean onTouchEvent(MotionEvent event)
 
 该方法返回 true 表示当前视图已经处理了对应的事件，事件将在这里完成消费，终止传递；返回 false 表示当前视图不处理这个事件，事件会被传递给其它视图
 
-#### 4、三者的联系
+#### 4、三者的联系 ★★★
 
 ViewGroup 完整包含以上三个过程，而 View 只包含**分发和消费**两个，既 View 类不包含 `onInterceptTouchEvent(MotionEvent)` 方法。三个方法之间的联系可以用如下伪代码来表示：
 
@@ -378,7 +378,7 @@ class MyLinearLayout @JvmOverloads constructor(
 
 从日志可以看到 MyLinearLayout 接收到了后续的 ACTION_MOVE 和 ACTION_UP 事件，且此时并没有再次调用 onInterceptTouchEvent 方法，而是直接调用了 onTouchEvent 方法
 
-```kotlin
+```java
 MyRelativeLayout: dispatchTouchEvent ACTION_DOWN
 MyRelativeLayout: onInterceptTouchEvent ACTION_DOWN
 MyRelativeLayout: onInterceptTouchEvent return: false
@@ -417,7 +417,7 @@ MyRelativeLayout: dispatchTouchEvent return: false
 
 View 没有拦截事件这个过程，但如果有消费掉 ACTION_DOWN 事件的话，后续事件就都可以接收到
 
-```kotlin
+```java
 class MyTextView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
@@ -443,7 +443,7 @@ class MyTextView @JvmOverloads constructor(
 
 可以看到，MyTextView 接收到了后续的 ACTION_MOVE 和 ACTION_UP 事件
 
-```kotlin
+```java
 MyRelativeLayout: dispatchTouchEvent ACTION_DOWN
 MyRelativeLayout: onInterceptTouchEvent ACTION_DOWN
 MyRelativeLayout: onInterceptTouchEvent return: false
@@ -544,13 +544,12 @@ View 的 dispatchTouchEvent 方法逻辑上还比较简单，可以总结为：
                     && li.mOnTouchListener.onTouch(this, event)) {
                 result = true;
             }
-
            	//第三步
             if (!result && onTouchEvent(event)) {
                 result = true;
             }
         }
-		···
+				···
         return result;
     }
 ```
@@ -642,13 +641,11 @@ ViewGroup 的 dispatchTouchEvent 方法相对 View 就要复杂很多了，因�
         if (onFilterTouchEventForSecurity(ev)) {
             final int action = ev.getAction();
             final int actionMasked = action & MotionEvent.ACTION_MASK;
-
             //第一步
             if (actionMasked == MotionEvent.ACTION_DOWN) {
                 cancelAndClearTouchTargets(ev);
                 resetTouchState();
             }
-
             //第二步
             final boolean intercepted;
             if (actionMasked == MotionEvent.ACTION_DOWN
@@ -663,24 +660,19 @@ ViewGroup 的 dispatchTouchEvent 方法相对 View 就要复杂很多了，因�
             } else {
                 intercepted = true;
             }
-
             ···
-
             if (!canceled && !intercepted) {
                 View childWithAccessibilityFocus = ev.isTargetAccessibilityFocus()
                         ? findChildWithAccessibilityFocus() : null;
-
                 if (actionMasked == MotionEvent.ACTION_DOWN
                         || (split && actionMasked == MotionEvent.ACTION_POINTER_DOWN)
                         || actionMasked == MotionEvent.ACTION_HOVER_MOVE) {
                     final int actionIndex = ev.getActionIndex(); // always 0 for down
                     final int idBitsToAssign = split ? 1 << ev.getPointerId(actionIndex)
                             : TouchTarget.ALL_POINTER_IDS;
-
                     // Clean up earlier touch targets for this pointer id in case they
                     // have become out of sync.
                     removePointersFromTouchTargets(idBitsToAssign);
-
                     //第三步
                     final int childrenCount = mChildrenCount;
                     if (newTouchTarget == null && childrenCount != 0) {
@@ -692,14 +684,12 @@ ViewGroup 的 dispatchTouchEvent 方法相对 View 就要复杂很多了，因�
                         }
                         ···
                     }
-				   ···
+				   					···
                 }
             }
-
             if (mFirstTouchTarget == null) {
                 //第四步
-                handled = dispatchTransformedTouchEvent(ev, canceled, null,
-                        TouchTarget.ALL_POINTER_IDS);
+                handled = dispatchTransformedTouchEvent(ev, canceled, null, TouchTarget.ALL_POINTER_IDS);
             } else {
                 //第五步
                 TouchTarget predecessor = null;
@@ -709,10 +699,8 @@ ViewGroup 的 dispatchTouchEvent 方法相对 View 就要复杂很多了，因�
                     if (alreadyDispatchedToNewTouchTarget && target == newTouchTarget) {
                         handled = true;
                     } else {
-                        final boolean cancelChild = resetCancelNextUpFlag(target.child)
-                                || intercepted;
-                        if (dispatchTransformedTouchEvent(ev, cancelChild,
-                                target.child, target.pointerIdBits)) {
+                        final boolean cancelChild = resetCancelNextUpFlag(target.child)|| intercepted;
+                        if (dispatchTransformedTouchEvent(ev, cancelChild,target.child, target.pointerIdBits)) {
                             handled = true;
                         }
                         if (cancelChild) {
@@ -730,7 +718,7 @@ ViewGroup 的 dispatchTouchEvent 方法相对 View 就要复杂很多了，因�
                     target = next;
                 }
             }
-			···
+						···
         }
 
         if (!handled && mInputEventConsistencyVerifier != null) {
@@ -825,7 +813,6 @@ public class Activity {
             finish();
             return true;
         }
-
         return false;
     }
 
@@ -843,7 +830,6 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
     public boolean superDispatchTouchEvent(MotionEvent event) {
         return mDecor.superDispatchTouchEvent(event);
     }
-
 }
 ```
 
@@ -872,7 +858,6 @@ public class DecorView extends FrameLayout implements RootViewSurfaceTaker, Wind
     public boolean onTouchEvent(MotionEvent event) {
         return onInterceptTouchEvent(event);
     }
-
 }
 ```
 
@@ -896,7 +881,7 @@ public class DecorView extends FrameLayout implements RootViewSurfaceTaker, Wind
 
 伪代码：
 
-```kotlin
+```java
 override fun onInterceptTouchEvent(event: MotionEvent): Boolean {
     var intercepted = false
     when (event.action) {
@@ -929,7 +914,7 @@ override fun onInterceptTouchEvent(event: MotionEvent): Boolean {
 
 子 View 修改其 dispatchTouchEvent 方法，根据实际需求来控制是否允许父容器拦截事件
 
-```kotlin
+```java
 override fun dispatchTouchEvent(event: MotionEvent): Boolean {
     when (event.action) {
         MotionEvent.ACTION_DOWN -> {
@@ -951,7 +936,7 @@ override fun dispatchTouchEvent(event: MotionEvent): Boolean {
 
 由于 ViewGroup 的 dispatchTouchEvent 方法会预先判断子 View 是否有要求其不拦截事件，如果没有的话才会调用自身的 onInterceptTouchEvent 方法，所以除了 ACTION_DOWN 外，如果子 View 不拦截的话那么 ViewGroup 都进行拦截
 
-```kotlin
+```java
 override fun onInterceptTouchEvent(event: MotionEvent): Boolean {
     return event.action != MotionEvent.ACTION_DOWN
 }
@@ -1030,7 +1015,7 @@ override fun onInterceptTouchEvent(event: MotionEvent): Boolean {
 
 这里选择使用内部拦截法来解决问题。首先需要让外部 ScrollView 拦截 ACTION_DOWN 之外的任何事件
 
-```kotlin
+```java
 class ExternalScrollView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : ScrollView(context, attrs, defStyleAttr) {
@@ -1054,13 +1039,12 @@ class ExternalScrollView @JvmOverloads constructor(
 
 内部 ScrollView 判断自身是否还处于可滑动状态，如果滑动到了最顶部还想再往下滑动，或者是滑动到了最底部还想再往上滑动，那么就将事件都交由外部 ScrollView 处理，其它情况都直接拦截并消费掉事件，这样内部 ScrollView 就可以实现内部滑动了
 
-```kotlin
+```java
 class InsideScrollView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : ScrollView(context, attrs, defStyleAttr) {
 
     private var lastX = 0f
-
     private var lastY = 0f
 
     override fun dispatchTouchEvent(motionEvent: MotionEvent): Boolean {
@@ -1092,7 +1076,6 @@ class InsideScrollView @JvmOverloads constructor(
         lastY = y
         return super.dispatchTouchEvent(motionEvent)
     }
-
 }
 ```
 
@@ -1114,7 +1097,7 @@ mFirstTouchTarget 中的 child 变量指向消费了触摸事件的下游 View�
 
 此外，TouchTarget 中的静态成员变量 sRecycleBin 就用于提供对象复用功能，以链表的形式最多缓存 MAX_RECYCLED 个对象，调用 obtain 方法的时候就会以切换 next 引用的形式来获取一个独立的 TouchTarget 对象
 
-```kotlin
+```java
 	private static final class TouchTarget {
         private static final int MAX_RECYCLED = 32;
         private static final Object sRecycleLock = new Object[0];
@@ -1182,8 +1165,7 @@ mFirstTouchTarget 中的 child 变量指向消费了触摸事件的下游 View�
 当存在上诉情况时，ViewGroup 就会通过 dispatchTransformedTouchEvent 方法构造一个 ACTION_CANCEL 事件并将之下发给 View，从而使得 View 即使没有接受到 ACTION_UP 事件也可以知道本次事件序列已经结束了
 
 ```java
-	private boolean dispatchTransformedTouchEvent(MotionEvent event, boolean cancel,
-            View child, int desiredPointerIdBits) {
+	private boolean dispatchTransformedTouchEvent(MotionEvent event, boolean cancel, View child, int desiredPointerIdBits) {
         final boolean handled;
 
         // Canceling motions is a special case.  We don't need to perform any transformations

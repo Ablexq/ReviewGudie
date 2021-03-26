@@ -1,7 +1,3 @@
-> 对于 Android Developer 来说，很多开源库都是**面试必备**的知识点，从使用方式到实现原理再到源码解析，这些都需要我们有一定程度的了解和运用能力。所以我打算来写一系列关于开源库**源码解析**和**实战演练**的文章，初定的目标是 **EventBus、ARouter、LeakCanary、Retrofit、Glide、OkHttp、Coil** 等几个，希望对你有所帮助 😁😁
->
-> 公众号：**[字节数组](https://s3.ax1x.com/2021/02/18/yRiE4K.png)**
-
 ### 一、前言
 
 Retrofit 也是现在 Android 应用开发中的标配之一了吧？笔者使用 Retrofit 蛮久的了，一直以来用着也挺舒心的，没遇到啥大的坑。总这样用着不来了解下其实现原理也好像不太好，趁着动笔写 [**三方库源码笔记**](https://github.com/leavesC/AndroidGuide/tree/gitbook/android_opensource) 系列文章就来对 Retrofit 进行一次（自我感觉的）全面的源码解析吧

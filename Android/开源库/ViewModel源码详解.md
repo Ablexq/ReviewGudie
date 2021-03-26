@@ -1,7 +1,3 @@
-> 对于 Android Developer 来说，Google Jetpack 可以说是当前最为基础的架构组件之一了，自从推出以后极大地改变了我们的开发模式并降低了开发难度，这也要求我们对当中一些子组件的实现原理具有一定程度的了解，所以我就打算来写一系列关于 Jetpack 源码解析的文章，希望对你有所帮助 😁😁
->
-> 公众号：**[字节数组](https://s3.ax1x.com/2021/02/18/yRiE4K.png)**
-
 在两个多月前我开始写 **从源码看 Jetpack** 系列文章，从源码角度介绍 Jetpack 多个组件实现原理，写了一半就停笔去写 **Java 多线程编程** 的文章去了，本篇文章就再来补上 ViewModel 这一个最为基础也最为开发者熟悉的组件
 
 本文所讲的的源代码基于以下依赖库当前最新版本：
@@ -15,13 +11,7 @@ implementation "androidx.lifecycle:lifecycle-viewmodel:2.3.0-alpha07"
 
 ViewModel 的使用方式基本是按照如下模板：ViewModelStoreOwner（Activity/Fragment）通过 ViewModelProvider 来完成 ViewModel 实例的初始化，并通过和 LifecycleOwner 绑定的方式来监听 LiveData 中数据的变化从而做出各种响应
 
-```kotlin
-/**
- * 作者：leavesC
- * 时间：2020/9/16 21:37
- * 描述：
- * GitHub：https://github.com/leavesC
- */
+```java
 class MainActivity : AppCompatActivity() {
 
     private val myViewModel by lazy {
@@ -36,18 +26,15 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
     }
-
 }
 
 class MyViewModel : ViewModel() {
-
     val nameLiveData = MutableLiveData<String>()
 
     override fun onCleared() {
         super.onCleared()
         Log.e("MyViewModel", "onCleared")
     }
-
 }
 ```
 
@@ -61,53 +48,37 @@ class MyViewModel : ViewModel() {
 - 没有继承。 那么就使用 NewInstanceFactory
 
 ```java
-    private final Factory mFactory;
-    private final ViewModelStore mViewModelStore;
+private final Factory mFactory;
+private final ViewModelStore mViewModelStore;
 
-	public ViewModelProvider(@NonNull ViewModelStoreOwner owner) {
-        this(owner.getViewModelStore(), owner instanceof HasDefaultViewModelProviderFactory
-                ? ((HasDefaultViewModelProviderFactory) owner).getDefaultViewModelProviderFactory()
-                : NewInstanceFactory.getInstance());
-    }
+public ViewModelProvider(@NonNull ViewModelStoreOwner owner) {
+  this(owner.getViewModelStore(), owner instanceof HasDefaultViewModelProviderFactory
+    ? ((HasDefaultViewModelProviderFactory) owner).getDefaultViewModelProviderFactory()
+    : NewInstanceFactory.getInstance());
+}
 
-    public ViewModelProvider(@NonNull ViewModelStoreOwner owner, @NonNull Factory factory) {
-        this(owner.getViewModelStore(), factory);
-    }
+public ViewModelProvider(@NonNull ViewModelStoreOwner owner, @NonNull Factory factory) {
+  this(owner.getViewModelStore(), factory);
+}
 
-    public ViewModelProvider(@NonNull ViewModelStore store, @NonNull Factory factory) {
-        mFactory = factory;
-        mViewModelStore = store;
-    }
+public ViewModelProvider(@NonNull ViewModelStore store, @NonNull Factory factory) {
+  mFactory = factory;
+  mViewModelStore = store;
+}
 ```
 
 `Factory` 是 ViewModelProvider 的内部接口，用于实现初始化 ViewModel 实例的逻辑。例如，`NewInstanceFactory` 就实现了通过**反射**来初始化**构造函数无参数类型的 ViewModel** 的逻辑
 
 ```java
-    /**
-     * Implementations of {@code Factory} interface are responsible to instantiate ViewModels.
-     */
-    public interface Factory {
-        /**
-         * Creates a new instance of the given {@code Class}.
-         * <p>
-         *
-         * @param modelClass a {@code Class} whose instance is requested
-         * @param <T>        The type parameter for the ViewModel.
-         * @return a newly created ViewModel
-         */
-        @NonNull
-        <T extends ViewModel> T create(@NonNull Class<T> modelClass);
-    }
+  // Implementations of {@code Factory} interface are responsible to instantiate ViewModels.
+  public interface Factory {
+      @NonNull
+      <T extends ViewModel> T create(@NonNull Class<T> modelClass);
+  }
 
  	public static class NewInstanceFactory implements Factory {
-
         private static NewInstanceFactory sInstance;
 
-        /**
-         * Retrieve a singleton instance of NewInstanceFactory.
-         *
-         * @return A valid {@link NewInstanceFactory}
-         */
         @NonNull
         static NewInstanceFactory getInstance() {
             if (sInstance == null) {
@@ -141,7 +112,7 @@ class MyViewModel : ViewModel() {
 ```java
     private ViewModelProvider.Factory mDefaultFactory;
 
-	@NonNull
+	  @NonNull
     @Override
     public ViewModelProvider.Factory getDefaultViewModelProviderFactory() {
         if (getApplication() == null) {
@@ -177,7 +148,7 @@ class MyViewModel : ViewModel() {
 ```java
     private final ViewModelStore mViewModelStore;
 
-	@NonNull
+	  @NonNull
     @MainThread
     public <T extends ViewModel> T get(@NonNull String key, @NonNull Class<T> modelClass) {
         ViewModel viewModel = mViewModelStore.get(key);
@@ -247,11 +218,6 @@ public class ViewModelStore {
 
 ```java
 public interface ViewModelStoreOwner {
-    /**
-     * Returns owned {@link ViewModelStore}
-     *
-     * @return a {@code ViewModelStore}
-     */
     @NonNull
     ViewModelStore getViewModelStore();
 }
@@ -275,8 +241,7 @@ public interface ViewModelStoreOwner {
                     + "Application instance. You can't request ViewModel before onCreate call.");
         }
         if (mViewModelStore == null) {
-            NonConfigurationInstances nc =
-                    (NonConfigurationInstances) getLastNonConfigurationInstance();
+            NonConfigurationInstances nc = (NonConfigurationInstances) getLastNonConfigurationInstance();
             if (nc != null) {
                 // Restore the ViewModelStore from NonConfigurationInstances
                 mViewModelStore = nc.viewModelStore;
@@ -316,8 +281,7 @@ NonConfigurationInstances 是 ComponentActivity 的一个静态内部类，其�
 
             // No one called getViewModelStore(), so see if there was an existing
             // ViewModelStore from our last NonConfigurationInstance
-            NonConfigurationInstances nc =
-                    (NonConfigurationInstances) getLastNonConfigurationInstance();
+            NonConfigurationInstances nc = (NonConfigurationInstances) getLastNonConfigurationInstance();
             if (nc != null) {
                 viewModelStore = nc.viewModelStore;
             }
@@ -353,8 +317,7 @@ NonConfigurationInstances 是 ComponentActivity 的一个静态内部类，其�
         mFragments.doLoaderStop(true);
         ArrayMap<String, LoaderManager> loaders = mFragments.retainLoaderNonConfig();
 
-        if (activity == null && children == null && fragments == null && loaders == null
-                && mVoiceInteractor == null) {
+        if (activity == null && children == null && fragments == null && loaders == null && mVoiceInteractor == null) {
             return null;
         }
 
@@ -380,21 +343,16 @@ NonConfigurationInstances 是 ComponentActivity 的一个静态内部类，其�
 
 ```java
 	/** Core implementation of activity destroy call. */
-    ActivityClientRecord performDestroyActivity(IBinder token, boolean finishing,
-            int configChanges, boolean getNonConfigInstance, String reason) {
+    ActivityClientRecord performDestroyActivity(IBinder token, boolean finishing, int configChanges, boolean getNonConfigInstance, String reason) {
         ActivityClientRecord r = mActivities.get(token);
         ···
             if (getNonConfigInstance) {
                 try {
                     //保存 Activity 返回的 NonConfigurationInstances
-                    r.lastNonConfigurationInstances
-                            = r.activity.retainNonConfigurationInstances();
+                    r.lastNonConfigurationInstances = r.activity.retainNonConfigurationInstances();
                 } catch (Exception e) {
                     if (!mInstrumentation.onException(r.activity, e)) {
-                        throw new RuntimeException(
-                                "Unable to retain activity "
-                                + r.intent.getComponent().toShortString()
-                                + ": " + e.toString(), e);
+                        throw new RuntimeException("Unable to retain activity " + r.intent.getComponent().toShortString() + ": " + e.toString(), e);
                     }
                 }
             }
@@ -416,8 +374,7 @@ NonConfigurationInstances 是 ComponentActivity 的一个静态内部类，其�
         Activity activity = null;
         try {
             java.lang.ClassLoader cl = appContext.getClassLoader();
-            activity = mInstrumentation.newActivity(
-                    cl, component.getClassName(), r.intent);
+            activity = mInstrumentation.newActivity(cl, component.getClassName(), r.intent);
             StrictMode.incrementExpectedActivityCount(activity.getClass());
             r.intent.setExtrasClassLoader(cl);
             r.intent.prepareToEnterProcess();
@@ -426,9 +383,7 @@ NonConfigurationInstances 是 ComponentActivity 的一个静态内部类，其�
             }
         } catch (Exception e) {
             if (!mInstrumentation.onException(activity, e)) {
-                throw new RuntimeException(
-                    "Unable to instantiate activity " + component
-                    + ": " + e.toString(), e);
+                throw new RuntimeException("Unable to instantiate activity " + component + ": " + e.toString(), e);
             }
         }
 
@@ -456,8 +411,7 @@ NonConfigurationInstances 是 ComponentActivity 的一个静态内部类，其�
         ···
         getLifecycle().addObserver(new LifecycleEventObserver() {
             @Override
-            public void onStateChanged(@NonNull LifecycleOwner source,
-                    @NonNull Lifecycle.Event event) {
+            public void onStateChanged(@NonNull LifecycleOwner source, @NonNull Lifecycle.Event event) {
                 if (event == Lifecycle.Event.ON_DESTROY) {
                     // Clear out the available context
                     mContextAwareHelper.clearAvailableContext();
@@ -474,11 +428,7 @@ NonConfigurationInstances 是 ComponentActivity 的一个静态内部类，其�
 
 ```java
 public class ViewModelStore {
-
     private final HashMap<String, ViewModel> mMap = new HashMap<>();
-
-	···
-
     /**
      *  Clears internal storage and notifies ViewModels that they are no longer used.
      */
@@ -501,12 +451,6 @@ ViewModelProvider 提供的 Factory 接口实现类有两个：
 如果想要通过其它类型的构造函数来初始化 ViewModel 的话，就需要我们自己来实现 `ViewModelProvider.Factory` 接口完成初始化逻辑了
 
 ```java
-/**
- * 作者：leavesC
- * 时间：2020/9/17 14:07
- * 描述：
- * GitHub：https://github.com/leavesC
- */
 class MainActivity : AppCompatActivity() {
 
     private val myViewModelA by lazy {
@@ -632,24 +576,14 @@ E/myViewModelB: github.leavesc.demo.MyViewModel@9abd6fe age: 20
 看以下代码，观察当应用启动时日志的输出结果
 
 ```java
-/**
- * 作者：leavesC
- * 时间：2020/9/17 14:07
- * 描述：
- * GitHub：https://github.com/leavesC
- */
 class MainActivity : AppCompatActivity() {
 
     private val aViewModel by lazy {
-        ViewModelProvider(this).get(
-            "myKey", AViewModel::class.java
-        )
+        ViewModelProvider(this).get("myKey", AViewModel::class.java)
     }
 
     private val bViewModel by lazy {
-        ViewModelProvider(this).get(
-            "myKey", BViewMode::class.java
-        )
+        ViewModelProvider(this).get("myKey", BViewMode::class.java)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -663,21 +597,17 @@ class MainActivity : AppCompatActivity() {
 }
 
 class AViewModel() : ViewModel() {
-
     override fun onCleared() {
         super.onCleared()
         Log.e("AViewModel", "onCleared")
     }
-
 }
 
 class BViewMode : ViewModel() {
-
     override fun onCleared() {
         super.onCleared()
         Log.e("BViewMode", "onCleared")
     }
-
 }
 ```
 
