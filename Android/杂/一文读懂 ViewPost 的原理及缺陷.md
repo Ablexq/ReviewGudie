@@ -5,9 +5,7 @@
 ```java
 class MainActivity : AppCompatActivity() {
 
-    private val view by lazy {
-        findViewById<View>(R.id.view)
-    }
+    private val view by lazy { findViewById<View>(R.id.view) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
