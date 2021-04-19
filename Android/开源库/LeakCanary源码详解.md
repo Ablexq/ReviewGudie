@@ -18,49 +18,14 @@ LeakCanary automatically detects leaks of the following objects:
 
 ```java
 data class Config(
-    /**
-     * Whether AppWatcher should automatically watch destroyed activity instances.
-     *
-     * Defaults to true.
-     */
+
     val watchActivities: Boolean = true,
-
-    /**
-     * Whether AppWatcher should automatically watch destroyed fragment instances.
-     *
-     * Defaults to true.
-     */
     val watchFragments: Boolean = true,
-
-    /**
-     * Whether AppWatcher should automatically watch destroyed fragment view instances.
-     *
-     * Defaults to true.
-     */
     val watchFragmentViews: Boolean = true,
-
-    /**
-     * Whether AppWatcher should automatically watch cleared [androidx.lifecycle.ViewModel]
-     * instances.
-     *
-     * Defaults to true.
-     */
     val watchViewModels: Boolean = true,
 
-    /**
-     * How long to wait before reporting a watched object as retained.
-     *
-     * Default to 5 seconds.
-     */
     val watchDurationMillis: Long = TimeUnit.SECONDS.toMillis(5),
 
-    /**
-     * Deprecated, this didn't need to be a part of the API.
-     * Used to indicate whether AppWatcher should watch objects (by keeping weak references to
-     * them). Currently a no-op.
-     *
-     * If you do need to stop watching objects, simply don't pass them to [objectWatcher].
-     */
     @Deprecated("This didn't need to be a part of LeakCanary's API. No-Op.")
     val enabled: Boolean = true
   )
@@ -105,7 +70,7 @@ internal sealed class AppWatcherInstaller : ContentProvider() {
 
 由于 `ContentProvider` 会在 `Application` 被创建之前就由系统调用其 `onCreate()` 方法来完成初始化，所以 LeakCanary 通过 `AppWatcherInstaller` 就可以拿到 `Context` 来完成初始化并随应用一起启动，通过这种方式就简化了使用者的引入成本。而且由于我们的引用方式是 `debugImplementation`，所以**正式版本**会自动移除对 LeakCanary 的所有引用，进一步简化了引入成本
 
-Jetpack 也包含了一个组件来实现**通过 ContentProvider 来完成初始化的逻辑**：[AppStartup](https://juejin.im/post/6847902224069165070)。在实现思路上两者很类似，但是如果每个三方库都通过自定义 `ContentProvider` 来实现初始化的话，那么应用的启动速度就会很感人了吧 :joy:，所以 Jetpack 官方推出的 `AppStartup` 应该是以后的主流才对
+Jetpack 也包含了一个组件来实现**通过 ContentProvider 来完成初始化的逻辑**：[AppStartup](https://juejin.im/post/6847902224069165070)。在实现思路上两者很类似，但是如果每个三方库都通过自定义 `ContentProvider` 来实现初始化的话，那么应用的启动速度就会很感人了吧，所以 Jetpack 官方推出的 `AppStartup` 应该是以后的主流才对
 
 `AppWatcherInstaller` 最终会将 `Application` 对象传给 `InternalAppWatcher` 的 `install(Application)` 方法
 
@@ -114,9 +79,7 @@ Jetpack 也包含了一个组件来实现**通过 ContentProvider 来完成初�
  * Note: this object must load fine in a JUnit environment
  */
 internal object InternalAppWatcher {
-
   ···
-
   val objectWatcher = ObjectWatcher(
       clock = clock,
       checkRetainedExecutor = checkRetainedExecutor,
@@ -134,7 +97,7 @@ internal object InternalAppWatcher {
     if (isDebuggableBuild) {
       SharkLog.logger = DefaultCanaryLog()
     }
-	//拿到默认配置，默认四种类型都进行检测
+	 //拿到默认配置，默认四种类型都进行检测
     val configProvider = { AppWatcher.config }
     //检测 Activity
     ActivityDestroyWatcher.install(application, objectWatcher, configProvider)
@@ -142,9 +105,7 @@ internal object InternalAppWatcher {
     FragmentDestroyWatcher.install(application, objectWatcher, configProvider)
     onAppWatcherInstalled(application)
   }
-
   ···
-
 }
 ```
 
@@ -189,7 +150,7 @@ fun main() {
 `ObjectWatcher` 的起始方法是 `watch(Any, String)`，该方法就用于监听指定对象
 
 ```java
-	/**
+    /**
      * References passed to [watch].
      * 用于保存要监听的对象，mapKey 是该对象的唯一标识、mapValue 是该对象的弱引用
      */
@@ -198,7 +159,7 @@ fun main() {
     //KeyedWeakReference 关联的引用队列
     private val queue = ReferenceQueue<Any>()
 
-	/**
+    /**
      * Watches the provided [watchedObject].
      *
      * @param description Describes why the object is watched.

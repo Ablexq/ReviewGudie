@@ -347,7 +347,7 @@ Java 泛型对于类型的约束只在编译期存在，运行时仍然会按照
 
 Kotlin 泛型在大体上和 Java 一致，毕竟两者需要保证兼容性
 
-```kotlin
+```java
 class Plate<T>(val t: T) {
 
     fun cut() {
@@ -371,7 +371,7 @@ fun main() {
 
 Kotlin 也支持在扩展函数中使用泛型
 
-```kotlin
+```java
 fun <T> List<T>.find(t: T): T? {
     val index = indexOf(t)
     return if (index > -1) get(index) else null
@@ -392,7 +392,7 @@ fun <T> List<T>.find(t: T): T? {
 
 例如，在以下例子中代码的运行结果还符合我们的预知。第一个转换操作类型相符，所以打印出了相加值。第二个转换操作由于基础类型是 Set 而非 List，所以抛出了 IllegalAccessException
 
-```kotlin
+```java
 fun main() {
     printSum(listOf(1, 2, 3)) //6
     printSum(setOf(1, 2, 3)) //IllegalAccessException
@@ -406,7 +406,7 @@ fun printSum(c: Collection<*>) {
 
 而在以下例子中抛出的却是 ClassCastException，这是因为在运行时不会判断且无法判断出类型实参是否是 Int，而只会判断基础类型 List 是否相符，所以这里会转换成功，等到要执行相加操作时才会抛出类型转换异常
 
-```kotlin
+```java
 printSum(listOf("1", "2", "3"))
 
 Exception in thread "main" java.lang.ClassCastException: java.lang.String cannot be cast to java.lang.Number
@@ -418,7 +418,7 @@ Exception in thread "main" java.lang.ClassCastException: java.lang.String cannot
 
 例如，假设存在一个盘子 Plate，我们要求该 Plate 只能用于装水果 Fruit，那么就可以对其泛型声明做进一步约束，Java 中使用 extend 关键字来声明约束规则，而 Kotlin 使用的是 **:**  。这样 Plate 就只能用于 Fruit 和其子类，而无法用于 Noodles 等不相关的类型，这种类型约束就被称为**上界约束**
 
-```kotlin
+```java
 open class Fruit
 
 class Apple : Fruit()
@@ -435,7 +435,7 @@ fun main() {
 
 如果上界约束拥有多层类型元素，Java 是使用 & 符号进行链式声明，Kotlin 则是用 where 关键字来依次进行声明
 
-```kotlin
+```java
 interface Soft
 
 class Plate<T>(val t: T) where T : Fruit, T : Soft
@@ -494,7 +494,7 @@ fun main() {
 
 Java 的**类型通配符**对应 Kotlin 中的概念就是**星号投影 * **，Java 存在的限制在 Kotlin 中一样有
 
-```kotlin
+```java
 fun printList(list: List<*>) {
     for (any in list) {
         println(any)
@@ -584,7 +584,7 @@ public class Arrays {
 
 此外，Java 数组和 Kotlin 中的数组不一样。Kotlin 中的数组类似于集合框架，具有对应的实现类 Array，Array 属于泛型类，支持了泛型因此也不再协变
 
-```kotlin
+```java
     val stringArray = arrayOfNulls<String>(3)
     val anyArray: Array<Any?> = stringArray //报错
 ```
@@ -664,7 +664,7 @@ Java 中关于泛型的困境在 Kotlin 中一样存在，out 和 in 都是 Kotl
 
 再来看下相同例子，该例子在 Java 中存在的问题在 Kotlin 中一样有
 
-```kotlin
+```java
 fun main() {
     val numberList = mutableListOf<Number>()
 
@@ -686,7 +686,7 @@ fun <T> copyAll(to: MutableList<T>, from: MutableList<T>) {
 
 此时就需要在 Kotlin 中来实现**泛型协变**和**泛型逆变**了，以下两种方式都可以实现：
 
-```kotlin
+```java
 fun <T> copyAll(to: MutableList<in T>, from: MutableList<T>) {
     to.addAll(from)
 }
@@ -708,7 +708,7 @@ fun <T> copyAll(to: MutableList<T>, from: MutableList<out T>) {
 
 将 from 的类型声明从 `MutableList<T>`修改为 `List<T>` 后，可以发现 `copyAll` 方法就可以正常调用了
 
-```kotlin
+```java
 fun <T> copyAll(to: MutableList<T>, from: List<T>) {
     to.addAll(from)
 }
@@ -718,7 +718,7 @@ fun <T> copyAll(to: MutableList<T>, from: List<T>) {
 
 以 Java 中的 ArrayList 为例，Kotlin 将之分为了 MutableList 和 List 两种类型的接口。而 List 接口中的泛型已经使用 out 关键字进行修饰了，且不包含任何**传入值并保存**的方法，即 List 接口**只支持读值而不支持写值**，其本身就已经满足了协变所需要的条件，因此`copyAll` 方法可以正常使用
 
-```kotlin
+```java
 public interface List<out E> : Collection<E> {
     override val size: Int
     override fun isEmpty(): Boolean
@@ -744,7 +744,7 @@ public interface List<out E> : Collection<E> {
 
 例如，我们可以写出以下这样的一个内联函数，用于判断一个对象是否是指定类型
 
-```kotlin
+```java
 fun main() {
     println(1.isInstanceOf<String>())
     println("string".isInstanceOf<Int>())
@@ -789,7 +789,7 @@ public final class GenericTest6Kt {
 
 inline 和 reified 比较有用的一个场景是用在 Gson 反序列的时候。由于泛型运行时**类型擦除**的问题，目前用 Gson 反序列化泛型类时步骤是比较繁琐的，利用 inline 和 reified 我们就可以简化很多操作
 
-```kotlin
+```java
 val gson = Gson()
 
 inline fun <reified T> toBean(json: String): T {
