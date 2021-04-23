@@ -41,9 +41,7 @@ public class SubscriberMethod {
     final boolean sticky;
     /** Used for efficient comparison */
     String methodString;
-
     ···
-
 }
 ```
 
@@ -214,65 +212,65 @@ public class SubscriberMethod {
 `checkAdd` 方法就用于进行上述判断
 
 ```java
-		//以 eventType 作为 key，method 或者 FindState 作为 value
-        final Map<Class, Object> anyMethodByEventType = new HashMap<>();
-        //以 methodKey 作为 key，methodClass 作为 value
-        final Map<String, Class> subscriberClassByMethodKey = new HashMap<>();
+//以 eventType 作为 key，method 或者 FindState 作为 value
+final Map<Class, Object> anyMethodByEventType = new HashMap<>();
+//以 methodKey 作为 key，methodClass 作为 value
+final Map<String, Class> subscriberClassByMethodKey = new HashMap<>();
 
-        boolean checkAdd(Method method, Class<?> eventType) {
-            // 2 level check: 1st level with event type only (fast), 2nd level with complete signature when required.
-            // Usually a subscriber doesn't have methods listening to the same event type.
+boolean checkAdd(Method method, Class<?> eventType) {
+    // 2 level check: 1st level with event type only (fast), 2nd level with complete signature when required.
+    // Usually a subscriber doesn't have methods listening to the same event type.
 
-            Object existing = anyMethodByEventType.put(eventType, method);
-            if (existing == null) {
-                //existing 等于 null 说明之前未解析到监听相同事件的方法，检查通过
-                //因为大部分情况下监听者不会声明多个监听相同事件的方法，所以先进行这步检查效率上会比较高
-                return true;
-            } else { //existing 不等于 null 说明之前已经解析到同样监听这个事件的方法了
+    Object existing = anyMethodByEventType.put(eventType, method);
+    if (existing == null) {
+        //existing 等于 null 说明之前未解析到监听相同事件的方法，检查通过
+        //因为大部分情况下监听者不会声明多个监听相同事件的方法，所以先进行这步检查效率上会比较高
+        return true;
+    } else { //existing 不等于 null 说明之前已经解析到同样监听这个事件的方法了
 
-                if (existing instanceof Method) {
-                    if (!checkAddWithMethodSignature((Method) existing, eventType)) {
-                        // Paranoia check
-                        throw new IllegalStateException();
-                    }
-                    // Put any non-Method object to "consume" the existing Method
-                    //会执行到这里，说明存在多个方法监听同个 Event，那么将将 eventType 对应的 value 置为 this
-                    //避免多次检查，让其直接去执行 checkAddWithMethodSignature 方法
-                    anyMethodByEventType.put(eventType, this);
-                }
-                return checkAddWithMethodSignature(method, eventType);
+        if (existing instanceof Method) {
+            if (!checkAddWithMethodSignature((Method) existing, eventType)) {
+                // Paranoia check
+                throw new IllegalStateException();
             }
+            // Put any non-Method object to "consume" the existing Method
+            //会执行到这里，说明存在多个方法监听同个 Event，那么将将 eventType 对应的 value 置为 this
+            //避免多次检查，让其直接去执行 checkAddWithMethodSignature 方法
+            anyMethodByEventType.put(eventType, this);
         }
+        return checkAddWithMethodSignature(method, eventType);
+    }
+}
 
-        private boolean checkAddWithMethodSignature(Method method, Class<?> eventType) {
-            methodKeyBuilder.setLength(0);
-            methodKeyBuilder.append(method.getName());
-            methodKeyBuilder.append('>').append(eventType.getName());
+private boolean checkAddWithMethodSignature(Method method, Class<?> eventType) {
+    methodKeyBuilder.setLength(0);
+    methodKeyBuilder.append(method.getName());
+    methodKeyBuilder.append('>').append(eventType.getName());
 
-            //以 methodName>eventTypeName 字符串作为 key
-            //通过这个 key 来判断是否存在子类重写了父类方法的情况
-            String methodKey = methodKeyBuilder.toString();
-            //获取声明了 method 的类对应的 class 对象
-            Class<?> methodClass = method.getDeclaringClass();
+    //以 methodName>eventTypeName 字符串作为 key
+    //通过这个 key 来判断是否存在子类重写了父类方法的情况
+    String methodKey = methodKeyBuilder.toString();
+    //获取声明了 method 的类对应的 class 对象
+    Class<?> methodClass = method.getDeclaringClass();
 
-            Class<?> methodClassOld = subscriberClassByMethodKey.put(methodKey, methodClass);
-            //1. 如果 methodClassOld == null 为 true，说明 method 是第一次解析到，允许添加
-            //2. 如果 methodClassOld.isAssignableFrom(methodClass) 为 true
-            //2.1、说明 methodClassOld 是 methodClass 的父类，需要以子类重写的方法 method 为准，允许添加
-            //     实际上应该不存在这种情况，因为 EventBus 是从子类开始向父类进行遍历的
-            //2.2、说明 methodClassOld 是 methodClass 是同个类，即 methodClass 声明了多个方法对同个事件进行监听 ，也允许添加
-            if (methodClassOld == null || methodClassOld.isAssignableFrom(methodClass)) {
-                // Only add if not already found in a sub class
-                return true;
-            } else {
-                // Revert the put, old class is further down the class hierarchy
-                //由于 EventBus 是从子类向父类进行解析
-                //会执行到这里就说明之前已经解析到了相同 key 的方法，对应子类重写了父类方法的情况
-                //此时需要以子类重写的方法 method 为准，所以又将 methodClassOld 重新设回去
-                subscriberClassByMethodKey.put(methodKey, methodClassOld);
-                return false;
-            }
-        }
+    Class<?> methodClassOld = subscriberClassByMethodKey.put(methodKey, methodClass);
+    //1. 如果 methodClassOld == null 为 true，说明 method 是第一次解析到，允许添加
+    //2. 如果 methodClassOld.isAssignableFrom(methodClass) 为 true
+    //2.1、说明 methodClassOld 是 methodClass 的父类，需要以子类重写的方法 method 为准，允许添加
+    //     实际上应该不存在这种情况，因为 EventBus 是从子类开始向父类进行遍历的
+    //2.2、说明 methodClassOld 是 methodClass 是同个类，即 methodClass 声明了多个方法对同个事件进行监听 ，也允许添加
+    if (methodClassOld == null || methodClassOld.isAssignableFrom(methodClass)) {
+        // Only add if not already found in a sub class
+        return true;
+    } else {
+        // Revert the put, old class is further down the class hierarchy
+        //由于 EventBus 是从子类向父类进行解析
+        //会执行到这里就说明之前已经解析到了相同 key 的方法，对应子类重写了父类方法的情况
+        //此时需要以子类重写的方法 method 为准，所以又将 methodClassOld 重新设回去
+        subscriberClassByMethodKey.put(methodKey, methodClassOld);
+        return false;
+    }
+}
 ```
 
 #### EventBus
@@ -628,15 +626,10 @@ final class BackgroundPoster implements Runnable, Poster {
 ```java
     private final Map<Class<?>, Object> stickyEvents;
 
-	/**
-     * Posts the given event to the event bus and holds on to the event (because it is sticky). The most recent sticky
-     * event of an event's type is kept in memory for future access by subscribers using {@link Subscribe#sticky()}.
-     */
     public void postSticky(Object event) {
         synchronized (stickyEvents) {
             stickyEvents.put(event.getClass(), event);
         }
-        // Should be posted after it is putted, in case the subscriber wants to remove immediately
         post(event);
     }
 ```
@@ -649,42 +642,35 @@ final class BackgroundPoster implements Runnable, Poster {
 这里主要看第二种情况。register 操作会在 subscribe 方法里完成黏性事件的分发。和 post 操作一样，发送黏性事件时也需要考虑 event 的继承关系
 
 ```java
-	private void subscribe(Object subscriber, SubscriberMethod subscriberMethod) {
-
-    	···
-
-        if (subscriberMethod.sticky) {
-            if (eventInheritance) {
-                // Existing sticky events of all subclasses of eventType have to be considered.
-                // Note: Iterating over all events may be inefficient with lots of sticky events,
-                // thus data structure should be changed to allow a more efficient lookup
-                // (e.g. an additional map storing sub classes of super classes: Class -> List<Class>).
-
-                //事件类型需要考虑其继承关系
-                //因此需要判断每一个 stickyEvent 的父类型是否存在监听者，有的话就需要都进行回调
-                Set<Map.Entry<Class<?>, Object>> entries = stickyEvents.entrySet();
-                for (Map.Entry<Class<?>, Object> entry : entries) {
-                    Class<?> candidateEventType = entry.getKey();
-                    if (eventType.isAssignableFrom(candidateEventType)) {
-                        Object stickyEvent = entry.getValue();
-                        checkPostStickyEventToSubscription(newSubscription, stickyEvent);
-                    }
+private void subscribe(Object subscriber, SubscriberMethod subscriberMethod) {
+    // ···
+    if (subscriberMethod.sticky) {
+        if (eventInheritance) {
+            //事件类型需要考虑其继承关系
+            //因此需要判断每一个 stickyEvent 的父类型是否存在监听者，有的话就需要都进行回调
+            Set<Map.Entry<Class<?>, Object>> entries = stickyEvents.entrySet();
+            for (Map.Entry<Class<?>, Object> entry : entries) {
+                Class<?> candidateEventType = entry.getKey();
+                if (eventType.isAssignableFrom(candidateEventType)) {
+                    Object stickyEvent = entry.getValue();
+                    checkPostStickyEventToSubscription(newSubscription, stickyEvent);
                 }
-            } else {
-                //事件类型不需要考虑其继承关系
-                Object stickyEvent = stickyEvents.get(eventType);
-                checkPostStickyEventToSubscription(newSubscription, stickyEvent);
             }
+        } else {
+            //事件类型不需要考虑其继承关系
+            Object stickyEvent = stickyEvents.get(eventType);
+            checkPostStickyEventToSubscription(newSubscription, stickyEvent);
         }
     }
+}
 
-    private void checkPostStickyEventToSubscription(Subscription newSubscription, Object stickyEvent) {
-        if (stickyEvent != null) {
-            // If the subscriber is trying to abort the event, it will fail (event is not tracked in posting state)
-            // --> Strange corner case, which we don't take care of here.
-            postToSubscription(newSubscription, stickyEvent, isMainThread());
-        }
+private void checkPostStickyEventToSubscription(Subscription newSubscription, Object stickyEvent) {
+    if (stickyEvent != null) {
+        // If the subscriber is trying to abort the event, it will fail (event is not tracked in posting state)
+        // --> Strange corner case, which we don't take care of here.
+        postToSubscription(newSubscription, stickyEvent, isMainThread());
     }
+}
 ```
 
 #### 4、移除黏性事件
@@ -692,22 +678,12 @@ final class BackgroundPoster implements Runnable, Poster {
 移除指定的黏性事件可以通过以下方法来实现，都是用于将指定事件从 `stickyEvents` 中移除
 
 ```java
-	/**
-     * Remove and gets the recent sticky event for the given event type.
-     *
-     * @see #postSticky(Object)
-     */
     public <T> T removeStickyEvent(Class<T> eventType) {
         synchronized (stickyEvents) {
             return eventType.cast(stickyEvents.remove(eventType));
         }
     }
 
-    /**
-     * Removes the sticky event if it equals to the given event.
-     *
-     * @return true if the events matched and the sticky event was removed.
-     */
     public boolean removeStickyEvent(Object event) {
         synchronized (stickyEvents) {
             Class<?> eventType = event.getClass();
@@ -720,7 +696,6 @@ final class BackgroundPoster implements Runnable, Poster {
             }
         }
     }
-
 ```
 
 ### 三、解除注册
@@ -730,9 +705,6 @@ final class BackgroundPoster implements Runnable, Poster {
 而此处虽然会将关于 subscriber 的信息均给移除掉，但是在 `SubscriberMethodFinder` 中的静态成员变量 `METHOD_CACHE` 依然会缓存着已经注册过的 subscriber 的信息，这也是为了在某些页面会先后多次注册 EventBus 时可以做到信息复用，避免多次循环反射
 
 ```java
-	/**
-     * Unregisters the given subscriber from all event classes.
-     */
     public synchronized void unregister(Object subscriber) {
         List<Class<?>> subscribedTypes = typesBySubscriber.get(subscriber);
         if (subscribedTypes != null) {
@@ -745,9 +717,6 @@ final class BackgroundPoster implements Runnable, Poster {
         }
     }
 
-    /**
-     * Only updates subscriptionsByEventType, not typesBySubscriber! Caller must update typesBySubscriber.
-     */
     private void unsubscribeByEventType(Object subscriber, Class<?> eventType) {
         List<Subscription> subscriptions = subscriptionsByEventType.get(eventType);
         if (subscriptions != null) {
@@ -797,12 +766,6 @@ dependencies {
 原始文件：
 
 ```java
-/**
- * 作者：leavesC
- * 时间：2020/10/01 12:17
- * 描述：
- * GitHub：https://github.com/leavesC
- */
 class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -811,14 +774,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     @Subscribe
-    fun fun1(msg: String) {
-
-    }
+    fun fun1(msg: String) { }
 
     @Subscribe(threadMode = ThreadMode.MAIN, priority = 100)
-    fun fun2(msg: String) {
-
-    }
+    fun fun2(msg: String) { }
 
 }
 ```
@@ -917,23 +876,13 @@ EventBus.builder().addIndex(MyEventBusIndex()).installDefaultEventBus()
 上文有介绍到，子类可以继承父类的 Subscribe 方法。但有一个比较奇怪的地方是：如果子类重写了父类多个 Subscribe 方法的话，就会抛出 IllegalStateException。例如，在下面的例子中。父类 BaseActivity 声明了两个 Subscribe 方法，子类 MainActivity 重写了这两个方法，此时运行后就会抛出 IllegalStateException。而如果 MainActivity 不重写或者只重写一个方法的话，就可以正常运行
 
 ```java
-/**
- * 作者：leavesC
- * 时间：2020/10/01 12:49
- * 描述：
- * GitHub：https://github.com/leavesC
- */
 open class BaseActivity : AppCompatActivity() {
 
     @Subscribe
-    open fun fun1(msg: String) {
-
-    }
+    open fun fun1(msg: String) { }
 
     @Subscribe
-    open fun fun2(msg: String) {
-
-    }
+    open fun fun2(msg: String) { }
 
 }
 
@@ -951,14 +900,10 @@ class MainActivity : BaseActivity() {
     }
 
     @Subscribe
-    override fun fun1(msg: String) {
-
-    }
+    override fun fun1(msg: String) { }
 
     @Subscribe
-    override fun fun2(msg: String) {
-
-    }
+    override fun fun2(msg: String) { }
 
 }
 ```
@@ -971,25 +916,25 @@ class MainActivity : BaseActivity() {
 2. 当 `checkAdd` 方法开始解析 `BaseActivity` 的 `fun2` 方法时，`existing` 对象就是 `BaseActivity.fun1`，此时就会执行到操作1，而由于子类已经重写了 `fun1` 方法，此时 `checkAddWithMethodSignature` 方法就会返回 false，最终导致抛出异常
 
 ```java
-        boolean checkAdd(Method method, Class<?> eventType) {
-            // 2 level check: 1st level with event type only (fast), 2nd level with complete signature when required.
-            // Usually a subscriber doesn't have methods listening to the same event type.
-            Object existing = anyMethodByEventType.put(eventType, method);
-            if (existing == null) {
-                return true;
-            } else {
-                if (existing instanceof Method) {
-                    //操作1
-                    if (!checkAddWithMethodSignature((Method) existing, eventType)) {
-                        // Paranoia check
-                        throw new IllegalStateException();
-                    }
-                    // Put any non-Method object to "consume" the existing Method
-                    anyMethodByEventType.put(eventType, this);
-                }
-                return checkAddWithMethodSignature(method, eventType);
+boolean checkAdd(Method method, Class<?> eventType) {
+    // 2 level check: 1st level with event type only (fast), 2nd level with complete signature when required.
+    // Usually a subscriber doesn't have methods listening to the same event type.
+    Object existing = anyMethodByEventType.put(eventType, method);
+    if (existing == null) {
+        return true;
+    } else {
+        if (existing instanceof Method) {
+            //操作1
+            if (!checkAddWithMethodSignature((Method) existing, eventType)) {
+                // Paranoia check
+                throw new IllegalStateException();
             }
+            // Put any non-Method object to "consume" the existing Method
+            anyMethodByEventType.put(eventType, this);
         }
+        return checkAddWithMethodSignature(method, eventType);
+    }
+}
 ```
 
 EventBus 中有一个 issues 也反馈了这个问题：[issues](https://github.com/greenrobot/EventBus/issues/539)，该问题在 2018 年时就已经存在了，EeventBus 的作者也只是回复说：**只在子类进行方法监听**

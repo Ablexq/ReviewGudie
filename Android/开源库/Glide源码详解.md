@@ -17,9 +17,9 @@ Glide 的缓存机制分为**内存缓存**和**磁盘缓存**两级。默认情
 
 在默认情况下，Glide 对于一张网络图片的取值路径按顺序如下所示：
 
-1. 当启动一个加载图片的请求时，会先检查 ActiveResources 中是否有符合条件的图片，如果存在则直接取值，否则就执行下一步。ActiveResources 存储了当前**正在使用**的图片资源（例如，某个 ImageView 正在展示这张图片），ActiveResources 通过弱引用来持有该图片资源
-2. 检查 MemoryCache 中是否有符合条件的图片，如果存在则直接取值，否则就执行下一步。MemoryCache 使用了 Lru 算法，用于在内存中缓存曾使用过但目前非使用状态的图片资源
-3. 检查本地磁盘缓存 DiskCache 中是否有符合条件的图片，如果存在则进行解码取值，否则就执行下一步
+1. 当启动一个加载图片的请求时，会先检查 `ActiveResources` 中是否有符合条件的图片，如果存在则直接取值，否则就执行下一步。ActiveResources 存储了当前**正在使用**的图片资源（例如，某个 ImageView 正在展示这张图片），ActiveResources 通过弱引用来持有该图片资源
+2. 检查 `MemoryCache` 中是否有符合条件的图片，如果存在则直接取值，否则就执行下一步。MemoryCache 使用了 Lru 算法，用于在内存中缓存曾使用过但目前非使用状态的图片资源
+3. 检查本地磁盘缓存 `DiskCache` 中是否有符合条件的图片，如果存在则进行解码取值，否则就执行下一步
 4. 联网请求图片。当加载到图片后，会将图片缓存到内存和磁盘中，以便后续复用
 
 所以说，Glide 的内存缓存分为 ActiveResources 和 MemoryCache 两级
@@ -55,45 +55,14 @@ Glide 实现**生命周期监听**涉及到的类包含以下几个：
 首先，LifecycleListener 定义了三种事件通知回调，用于通知容器的活跃状态（是处于前台、后台、还是已经退出了）。Lifecycle 用于注册和移除 LifecycleListener
 
 ```java
-/**
- * An interface for listener to {@link android.app.Fragment} and {@link android.app.Activity}
- * lifecycle events.
- */
 public interface LifecycleListener {
-
-  /**
-   * Callback for when {@link android.app.Fragment#onStart()}} or {@link
-   * android.app.Activity#onStart()} is called.
-   */
   void onStart();
-
-  /**
-   * Callback for when {@link android.app.Fragment#onStop()}} or {@link
-   * android.app.Activity#onStop()}} is called.
-   */
   void onStop();
-
-  /**
-   * Callback for when {@link android.app.Fragment#onDestroy()}} or {@link
-   * android.app.Activity#onDestroy()} is called.
-   */
   void onDestroy();
 }
-```
 
-```java
-/** An interface for listening to Activity/Fragment lifecycle events. */
 public interface Lifecycle {
-  /** Adds the given listener to the set of listeners managed by this Lifecycle implementation. */
   void addListener(@NonNull LifecycleListener listener);
-
-  /**
-   * Removes the given listener from the set of listeners managed by this Lifecycle implementation,
-   * returning {@code true} if the listener was removed successfully, and {@code false} otherwise.
-   *
-   * <p>This is an optimization only, there is no guarantee that every added listener will
-   * eventually be removed.
-   */
   void removeListener(@NonNull LifecycleListener listener);
 }
 ```
@@ -109,17 +78,6 @@ class ActivityFragmentLifecycle implements Lifecycle {
   private boolean isStarted;
   private boolean isDestroyed;
 
-  /**
-   * Adds the given listener to the list of listeners to be notified on each lifecycle event.
-   *
-   * <p>The latest lifecycle event will be called on the given listener synchronously in this
-   * method. If the activity or fragment is stopped, {@link LifecycleListener#onStop()}} will be
-   * called, and same for onStart and onDestroy.
-   *
-   * <p>Note - {@link com.bumptech.glide.manager.LifecycleListener}s that are added more than once
-   * will have their lifecycle methods called more than once. It is the caller's responsibility to
-   * avoid adding listeners multiple times.
-   */
   @Override
   public void addListener(@NonNull LifecycleListener listener) {
     lifecycleListeners.add(listener);
@@ -165,9 +123,7 @@ ActivityFragmentLifecycle 用于 SupportRequestManagerFragment 这个 Fragment �
 
 ```java
 public class SupportRequestManagerFragment extends Fragment {
-
   private static final String TAG = "SupportRMFragment";
-
   private final ActivityFragmentLifecycle lifecycle;
 
   public SupportRequestManagerFragment() {
@@ -208,7 +164,6 @@ public class SupportRequestManagerFragment extends Fragment {
   public String toString() {
     return super.toString() + "{parent=" + getParentFragmentUsingHint() + "}";
   }
-
 }
 ```
 

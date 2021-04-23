@@ -47,15 +47,8 @@ dependencies {
 ```java
 internal sealed class AppWatcherInstaller : ContentProvider() {
 
-    /**
-     * [MainProcess] automatically sets up the LeakCanary code that runs in the main app process.
-     */
     internal class MainProcess : AppWatcherInstaller()
 
-    /**
-     * When using the `leakcanary-android-process` artifact instead of `leakcanary-android`,
-     * [LeakCanaryProcess] automatically sets up the LeakCanary code
-     */
     internal class LeakCanaryProcess : AppWatcherInstaller()
 
     override fun onCreate(): Boolean {
